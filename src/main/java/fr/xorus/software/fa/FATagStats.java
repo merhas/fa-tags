@@ -1,5 +1,6 @@
 package fr.xorus.software.fa;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -11,6 +12,7 @@ import java.util.*;
 public class FATagStats {
     FurAffinity fa;
     TagCleaner tagCleaner;
+    Boolean logguedIn = false;
 
     public FATagStats() {
         fa = new FurAffinity();
@@ -18,19 +20,29 @@ public class FATagStats {
     }
 
     public void login(String user, String password) {
-        fa.authenticate(user, password);
+        Status.updateStatus("Login...");
+
+        if (fa.authenticate(user, password)) {
+            Status.updateStatus("Loggued in as " + user);
+            logguedIn = true;
+        } else {
+            Status.updateStatus("Could not log you in : " + fa.lastError);
+        }
     }
 
-    public void generateTagStats() {
+    public void generateTagStats(String grabUser) {
+        Status.updateStatus("Grabbing favorites list");
         List<String> keywords = new ArrayList<>();
-        List<String> imageIds = fa.getFavorites();
+        List<String> imageIds = (grabUser.length() > 0) ? fa.getFavorites(grabUser) : fa.getFavorites();
 
+        int imNumber = imageIds.size();
         int i = 0;
         for (String imageId : imageIds) {
+            Status.updateStatus("Grabbing image tags " + ++i + " / " + imNumber, (int) (((float)i / (float)imNumber) * 100));
             keywords.addAll(fa.getImageTags(imageId));
-            if (++i >= 10) break;
         }
 
+        Status.updateStatus("Done, cleaning up tag list");
         Map<String, Integer> count = new HashMap<>();
         Set<String> uniqueKeywords = new HashSet<>(keywords);
         for (String keyword : uniqueKeywords) {
@@ -49,14 +61,17 @@ public class FATagStats {
             System.out.print(line);
         }
 
+        File output = new File("fa-tags.csv");
         PrintWriter writer;
         try {
-            writer = new PrintWriter("fa-tags.csv", "UTF-8");
+            writer = new PrintWriter(output);
             writer.print(csvOut);
             writer.close();
-        } catch (FileNotFoundException | UnsupportedEncodingException e) {
+        } catch (FileNotFoundException e) {
             System.err.print("could not open output file");
             e.printStackTrace();
         }
+
+        Status.updateStatus("Done :). Output: " + output.getAbsolutePath());
     }
 }

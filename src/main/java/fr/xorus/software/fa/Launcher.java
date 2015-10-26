@@ -8,8 +8,10 @@ import java.io.IOException;
 public class Launcher {
     public static void main(String[] args) {
         FATagStats stats = new FATagStats();
+        GUI gui = new GUI(stats);
+        gui.setVisible(true);
 
-        stats.login("user", "password");
-        stats.generateTagStats();
+//        stats.login("user", "password");
+//        stats.generateTagStats();
     }
 }

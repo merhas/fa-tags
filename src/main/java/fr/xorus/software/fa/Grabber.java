@@ -16,7 +16,7 @@ import java.util.List;
 public class Grabber {
     private static int TIMEOUT = 10000;
 
-    public Session login(String user, String password) throws IOException {
+    public Session login(String user, String password) throws IOException, LoginError {
         Connection.Response loginForm;
         String url = FurAffinity.FA_URL + FurAffinity.LOGIN_ACTION;
 
@@ -24,19 +24,23 @@ public class Grabber {
 
         Session session = new Session(loginForm.cookies());
 
-        Connection.Response loginAttempt = Jsoup.connect(url)
+        System.out.println("POST");
+        Connection.Response loginAttempt = prepareConnection(url)
                 .data("action", "login")
                 .data("retard_protection", "1")
                 .data("login", "Login to FurAffinity")
                 .data("name", user)
                 .data("pass", password)
                 .cookies(loginForm.cookies())
-                .timeout(TIMEOUT)
                 .method(Connection.Method.POST)
                 .execute();
 
         Document loginAttemptDoc = new Document(loginAttempt.body());
-        // todo: handle login error
+
+        if (!loginAttempt.cookies().containsKey("a")) {
+            throw new LoginError("login error");
+        }
+
         session.putAll(loginAttempt.cookies());
         return session;
     }
@@ -92,6 +96,10 @@ public class Grabber {
             return true;
         }
         return false;
+    }
+
+    private String getError(Document document) {
+        return document.select("html body div div table.maintable tbody tr td.alt1 b").text();
     }
 
     private Connection prepareConnection(String url) {

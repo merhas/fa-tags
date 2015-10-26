@@ -16,6 +16,7 @@ public class FurAffinity {
     public String user;
     private Session session = null;
     private Grabber grabber;
+    public String lastError = "";
 
     public FurAffinity() {
         grabber = new Grabber();
@@ -29,6 +30,9 @@ public class FurAffinity {
                 session = grabber.login(user, password);
             } catch (IOException e) {
                 System.err.println("Could not authenticate : " + e.getMessage());
+            } catch (LoginError loginError) {
+                lastError = loginError.getMessage();
+                return false;
             }
         }
 
