@@ -3,7 +3,6 @@
  */
 package fr.xorus.software.fa;
 
-import java.io.IOException;
 
 public class Launcher {
     public static void main(String[] args) {

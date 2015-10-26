@@ -17,6 +17,7 @@ public class GUI extends JFrame implements StatusUpdatable {
     FATagStats fats;
     JProgressBar progressBar;
     JLabel status;
+    JCheckBox downloadFaves;
 
     public GUI(FATagStats fats) {
         super("FA Tag Stats");
@@ -31,42 +32,51 @@ public class GUI extends JFrame implements StatusUpdatable {
         grab = new JButton("Generate tag stats from faves");
         progressBar = new JProgressBar();
         status = new JLabel("Disconnected");
+        status.setHorizontalAlignment(SwingConstants.CENTER);
+
+        progressBar.setPreferredSize(new Dimension(100, 15));
+        downloadFaves = new JCheckBox("Download images");
 
         user.setSize(200, user.getHeight());
         password.setSize(200, password.getHeight());
 
-        setLayout(new GridLayout(3, 1));
+        setLayout(new GridLayout(5, 1));
 
         JPanel loginPane = new JPanel();
-        loginPane.setLayout(new GridLayout(3, 2));
+        loginPane.setLayout(new GridLayout(2, 2));
         loginPane.add(new JLabel("FA username"));
         loginPane.add(user);
         loginPane.add(new JLabel("FA password"));
         loginPane.add(password);
-        loginPane.add(login);
+
+        add(loginPane);
+        add(login);
 
         JPanel grabPane = new JPanel();
         grabPane.setLayout(new GridLayout(2, 2));
         grabPane.add(new JLabel("FA user to grab"));
         grabPane.add(userToGrab);
-        grabPane.add(grab);
+        grabPane.add(downloadFaves);
 
-        add(loginPane);
         add(grabPane);
+        add(grab);
 
         JPanel statusPane = new JPanel();
-        statusPane.add(status, BorderLayout.EAST);
-        statusPane.add(progressBar, BorderLayout.CENTER);
+        statusPane.setLayout(new GridLayout(2, 1));
+        statusPane.add(status);
+        statusPane.add(progressBar);
 
         add(statusPane, BorderLayout.SOUTH);
 
         userToGrab.setEnabled(false);
         grab.setEnabled(false);
+        downloadFaves.setEnabled(false);
 
         pack();
 
         login.addActionListener(e -> login());
         grab.addActionListener(e -> grab());
+        downloadFaves.addActionListener(e -> downloadCheck());
 
         Status.registerStatusUpdatable(this);
     }
@@ -86,6 +96,7 @@ public class GUI extends JFrame implements StatusUpdatable {
                     userToGrab.setText(fats.fa.user);
                     userToGrab.setEnabled(true);
                     grab.setEnabled(true);
+                    downloadFaves.setEnabled(true);
                 }
             }
         };
@@ -98,22 +109,32 @@ public class GUI extends JFrame implements StatusUpdatable {
             @Override
             public void run() {
                 grab.setEnabled(false);
+                downloadFaves.setEnabled(false);
                 fats.generateTagStats(userToGrab.getText());
                 grab.setEnabled(true);
+                downloadFaves.setEnabled(true);
             }
         };
 
         task.start();
     }
 
+    private void downloadCheck() {
+        if(downloadFaves.isSelected()) {
+            fats.downloadImages = true;
+        } else {
+            fats.downloadImages = false;
+        }
+    }
+
     @Override
     public void setStatus(String statusMessage) {
-        this.status.setText(statusMessage);
+        this.status.setText("<html>" + statusMessage + "</html>");
     }
 
     @Override
     public void setStatus(String statusMessage, Integer progress) {
         progressBar.setValue(progress);
-        status.setText(statusMessage);
+        setStatus(statusMessage);
     }
 }

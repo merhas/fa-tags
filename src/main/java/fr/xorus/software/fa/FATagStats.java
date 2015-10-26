@@ -1,5 +1,8 @@
 package fr.xorus.software.fa;
 
+import org.jsoup.nodes.Document;
+
+import javax.swing.text.View;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -13,6 +16,7 @@ public class FATagStats {
     FurAffinity fa;
     TagCleaner tagCleaner;
     Boolean logguedIn = false;
+    Boolean downloadImages = false;
 
     public FATagStats() {
         fa = new FurAffinity();
@@ -26,7 +30,7 @@ public class FATagStats {
             Status.updateStatus("Loggued in as " + user);
             logguedIn = true;
         } else {
-            Status.updateStatus("Could not log you in : " + fa.lastError);
+            Status.updateStatus("Could not log you in : " + fa.lastError + "<br>Try retrying (wrong password maybe?)");
         }
     }
 
@@ -34,12 +38,29 @@ public class FATagStats {
         Status.updateStatus("Grabbing favorites list");
         List<String> keywords = new ArrayList<>();
         List<String> imageIds = (grabUser.length() > 0) ? fa.getFavorites(grabUser) : fa.getFavorites();
+        ImageSaver saver = new ImageSaver();
 
         int imNumber = imageIds.size();
         int i = 0;
         for (String imageId : imageIds) {
-            Status.updateStatus("Grabbing image tags " + ++i + " / " + imNumber, (int) (((float)i / (float)imNumber) * 100));
-            keywords.addAll(fa.getImageTags(imageId));
+            Status.updateStatus("Grabbing image tags " + ++i + " / " + imNumber + "<br>Id " + imageId, (int) (((float) i / (float) imNumber) * 100));
+            ViewPage viewPage = fa.getViewPage(imageId);
+            if (viewPage == null) {
+                continue;
+            }
+
+            keywords.addAll(viewPage.parseImageTags());
+
+            if (downloadImages) {
+                String link = viewPage.parseImageLink();
+                if (link != null) {
+                    String name = link.substring(link.lastIndexOf("/"), link.length());
+                    Status.updateStatus("Downloading image " + i + " / " + imNumber + "<br>" + name, (int) (((float) i / (float) imNumber) * 100));
+                    fa.downloadImage(saver, link, name);
+                } else {
+                    System.err.println("could not download image " + imageId);
+                }
+            }
         }
 
         Status.updateStatus("Done, cleaning up tag list");

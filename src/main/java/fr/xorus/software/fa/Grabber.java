@@ -6,6 +6,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
  * Created by Xorus on 25/10/2015.
  */
 public class Grabber {
-    private static int TIMEOUT = 10000;
+    private static int TIMEOUT = 20000;
 
     public Session login(String user, String password) throws IOException, LoginError {
         Connection.Response loginForm;
@@ -74,18 +75,14 @@ public class Grabber {
         return ids;
     }
 
-    public List<String> getImageTags(Session session, String id) throws IOException {
+    public Document getImagePage(Session session, String id) throws IOException {
         String url = FurAffinity.FA_URL + FurAffinity.VIEW_ACTION + id;
+        return prepareConnection(url, session).get();
+    }
 
-        Document artwork = prepareConnection(url, session).get();
-        Elements keywords = artwork.select("#keywords a");
-
-        List<String> keywordList = new ArrayList<String>();
-        for (Element keyword : keywords) {
-            keywordList.add(keyword.text().toLowerCase());
-        }
-
-        return keywordList;
+    public void downloadImage(ImageSaver saver, Session session, String url, String filename) throws IOException {
+        Connection.Response resultImageResponse = prepareConnection(url, session).ignoreContentType(true).execute();
+        saver.saveFromResponse(resultImageResponse, filename);
     }
 
     private boolean isError(Document document) {
