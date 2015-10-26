@@ -25,3 +25,9 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
     compile group: 'com.cedarsoftware', name: 'json-io', version: '4.1.8'
 }
+
+jar {
+    manifest.attributes(
+            'Main-Class': 'fr.xorus.software.fa.Launcher'
+    )
+}
